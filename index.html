@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Will climate change cause societal collapse?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0B1D2E;         /* coldest stripe: the background */
+    --ice: #E9EFF2;         /* primary text */
+    --mist: #8DA2B3;        /* secondary text */
+    --deep: #5E7688;        /* tertiary text, references */
+    --cold: #7FB8DD;        /* left side of the planet */
+    --hot: #F7866A;         /* right side of the planet */
+    --magma: #FDAE6B;       /* crack glow */
+    --line: #2B4458;        /* resting connectors */
+    --serif: "Newsreader", "Iowan Old Style", Georgia, "Times New Roman", serif;
+    --sans: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--ink); overflow: hidden; }
+  body { color: var(--ice); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+
+  /* Fixed 16:9 stage, scaled to fit any screen */
+  #stage {
+    position: absolute; left: 50%; top: 50%;
+    width: 1600px; height: 900px;
+    transform-origin: center center;
+    cursor: pointer;
+  }
+  #stage:focus { outline: none; }
+  
+
+  h1 {
+    position: absolute; left: 80px; top: 58px; width: 1100px;
+    font-family: var(--serif); font-weight: 400; font-size: 56px;
+    line-height: 1.05; letter-spacing: -0.015em; color: var(--ice);
+    font-variation-settings: "opsz" 72;
+  }
+
+  /* Progress: one mark per angle, filled as each is revealed */
+  #progress {
+    position: absolute; right: 80px; top: 84px;
+    display: flex; gap: 6px;
+  }
+  #progress i {
+    display: block; width: 26px; height: 4px; border-radius: 2px;
+    background: var(--line); transition: background .5s ease;
+  }
+
+  svg#planet { position: absolute; inset: 0; width: 1600px; height: 900px; overflow: visible; }
+
+  .angle {
+    position: absolute; width: 470px; height: 190px;
+    display: flex; flex-direction: column; justify-content: center;
+    clip-path: inset(0 0 0 100%);
+    transition: clip-path .7s cubic-bezier(.6,0,.2,1);
+  }
+  .angle.left  { left: 60px;  text-align: right; clip-path: inset(0 0 0 100%); }
+  .angle.right { left: 1070px; text-align: left; clip-path: inset(0 100% 0 0); }
+  .angle.on    { clip-path: inset(0 0 0 0); }
+
+  .who { font-size: 18px; color: var(--mist); margin-bottom: 6px; }
+  .who b { font-weight: 600; }
+  .left .who b  { color: var(--cold); }
+  .right .who b { color: var(--hot); }
+  .q {
+    font-family: var(--serif); font-weight: 500; font-size: 38px;
+    line-height: 1.08; letter-spacing: -0.01em; color: var(--ice);
+    font-variation-settings: "opsz" 48; margin-bottom: 10px;
+  }
+  .verdict { font-size: 19px; line-height: 1.35; color: #C9D6DE; margin-bottom: 10px; text-wrap: balance; }
+  .refs { font-size: 13.5px; line-height: 1.4; color: var(--deep); text-wrap: balance; }
+
+  #caption {
+    position: absolute; left: 560px; width: 480px; top: 694px;
+    text-align: center; font-size: 12.5px; color: var(--deep);
+  }
+
+  #answer {
+    position: absolute; left: 550px; width: 500px; top: 730px;
+    text-align: center; opacity: 0; transform: translateY(6px);
+    transition: opacity .9s ease, transform .9s ease;
+  }
+  #answer.on { opacity: 1; transform: none; }
+  #answer p:first-child { font-size: 16px; color: var(--magma); margin-bottom: 4px; font-weight: 500; }
+  #answer p:last-child {
+    font-family: var(--serif); font-style: italic; font-size: 30px;
+    line-height: 1.2; color: var(--ice); font-variation-settings: "opsz" 36; text-wrap: balance;
+  }
+
+  #hint {
+    position: absolute; left: 80px; bottom: 34px;
+    font-size: 13px; color: var(--deep); transition: opacity .6s ease;
+  }
+  #hint.gone { opacity: 0; }
+  #refsBtn {
+    position: absolute; right: 80px; bottom: 30px;
+    font: 500 13px var(--sans); color: var(--mist);
+    background: none; border: 1px solid var(--line); border-radius: 14px;
+    padding: 5px 13px; cursor: pointer;
+  }
+  #refsBtn:hover, #refsBtn:focus-visible { color: var(--ice); border-color: var(--mist); outline: none; }
+
+  /* Full reference list */
+  #refs {
+    position: absolute; inset: 0; background: #081522;
+    padding: 64px 80px 56px; display: none; cursor: default;
+  }
+  #refs.open { display: block; }
+  #refs h2 { font-family: var(--serif); font-weight: 400; font-size: 40px; margin-bottom: 26px; }
+  #refs .cols { columns: 2; column-gap: 64px; height: 700px; overflow-y: auto; }
+  #refs section { break-inside: avoid; margin-bottom: 20px; }
+  #refs h3 { font-size: 15px; font-weight: 600; color: var(--magma); margin-bottom: 6px; }
+  #refs p { font-size: 13px; line-height: 1.45; color: #C9D6DE; margin-bottom: 6px; padding-left: 1.4em; text-indent: -1.4em; }
+  #refs em { font-style: italic; }
+  #refs .close { position: absolute; right: 80px; top: 72px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .angle, #answer, #progress i { transition: none !important; }
+  }
+  @media print {
+    html, body { overflow: visible; }
+    .angle { clip-path: none !important; }
+    #answer { opacity: 1; transform: none; }
+    #hint, #refsBtn { display: none; }
+  }
+</style>
+</head>
+<body>
+<div id="stage" tabindex="0" aria-label="Group slide. Press space or click to reveal each research angle.">
+  <h1>Will climate change cause societal collapse?</h1>
+  <div id="progress" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+  <svg id="planet" viewBox="0 0 1600 900" aria-hidden="true"></svg>
+
+  <article class="angle left" data-i="0">
+    <p class="who"><b>Lacey</b> on tipping points</p>
+    <h2 class="q">Sudden collapse?</h2>
+    <p class="verdict">Possible, but the timing and scale are uncertain.</p>
+    <p class="refs">Lenton et al. (2019); Kemp et al. (2022)</p>
+  </article>
+  <article class="angle left" data-i="1">
+    <p class="who"><b>Emmanuel</b> on food security</p>
+    <h2 class="q">Harvest failure?</h2>
+    <p class="verdict">A real risk if major breadbaskets fail together.</p>
+    <p class="refs">Myers et al. (2014); Cottrell et al. (2019); Gaupp et al. (2020)</p>
+  </article>
+  <article class="angle left" data-i="2">
+    <p class="who"><b>Kevin</b> on conflict and migration</p>
+    <h2 class="q">War and displacement?</h2>
+    <p class="verdict">Climate raises the risk; existing conditions decide the outcome.</p>
+    <p class="refs">Mach et al. (2019); Watson et al. (2023); Hoffmann et al. (2024)</p>
+  </article>
+  <article class="angle right" data-i="3">
+    <p class="who"><b>Stella</b> on government action</p>
+    <h2 class="q">Can policy prevent it?</h2>
+    <p class="verdict">It can cut the risk, but pledges still outrun action.</p>
+    <p class="refs">Roelfsema et al. (2020); Falkner (2016); UNEP (2023)</p>
+  </article>
+  <article class="angle right" data-i="4">
+    <p class="who"><b>Kewe</b> on the economy and finance</p>
+    <h2 class="q">Financial contagion?</h2>
+    <p class="verdict">Climate shocks can spread across the whole financial system.</p>
+    <p class="refs">Bolton et al. (2020); Battiston et al. (2017); Curcio et al. (2023)</p>
+  </article>
+  <article class="angle right" data-i="5">
+    <p class="who"><b>Mark</b> on Ireland</p>
+    <h2 class="q">What about Ireland?</h2>
+    <p class="verdict">Farming is exposed, and the costs reach the wider economy.</p>
+    <p class="refs">Desmond et al. (2017); Sweeney et al. (2008); de&nbsp;Bruin et&nbsp;al. (2024); Mozahid &amp;&nbsp;Gardebroek (2025)</p>
+  </article>
+
+  <p id="caption">Stylised warming stripes after Hawkins (2018): cooler years left, warmer years right.</p>
+
+  <div id="answer">
+    <p>Our answer</p>
+    <p>Not inevitable, but climate change multiplies existing risks.</p>
+  </div>
+
+  <p id="hint">Press space or click to reveal each angle. Press R for full references.</p>
+  <button id="refsBtn" type="button">References</button>
+
+  <div id="refs" role="dialog" aria-label="Full references">
+    <h2>References</h2>
+    <button id="refsClose" class="close" type="button" style="font:500 13px var(--sans);color:var(--mist);background:none;border:1px solid var(--line);border-radius:14px;padding:5px 13px;cursor:pointer;">Close</button>
+    <div class="cols">
+      <section><h3>Lacey: tipping points</h3>
+        <p>Kemp, L., Xu, C., Depledge, J., Ebi, K. L., Gibbins, G., Kohler, T. A., Rockström, J., Scheffer, M., Schellnhuber, H. J., Steffen, W., &amp; Lenton, T. M. (2022). Climate Endgame: Exploring catastrophic climate change scenarios. <em>Proceedings of the National Academy of Sciences, 119</em>(34), e2108146119. https://doi.org/10.1073/pnas.2108146119</p>
+        <p>Lenton, T. M., Rockström, J., Gaffney, O., Rahmstorf, S., Richardson, K., Steffen, W., &amp; Schellnhuber, H. J. (2019). Climate tipping points: Too risky to bet against. <em>Nature, 575</em>(7784), 592–595. https://doi.org/10.1038/d41586-019-03595-0</p>
+      </section>
+      <section><h3>Emmanuel: food security</h3>
+        <p>Cottrell, R. S., Nash, K. L., Halpern, B. S., Remenyi, T. A., Corney, S. P., Fleming, A., Fulton, E. A., Hornborg, S., Johne, A., Watson, R. A., &amp; Blanchard, J. L. (2019). Food production shocks across land and sea. <em>Nature Sustainability, 2</em>(2), 130–137. https://doi.org/10.1038/s41893-018-0210-1</p>
+        <p>Gaupp, F., Hall, J., Hochman, Z., &amp; Dadson, S. (2020). Changing risks of simultaneous global breadbasket failure. <em>Nature Climate Change, 10</em>(1), 54–57. https://doi.org/10.1038/s41558-019-0600-z</p>
+        <p>Myers, S. S., Zanobetti, A., Kloog, I., Huybers, P., Leakey, A. D. B., Bloom, A. J., et al. (2014). Increasing CO₂ threatens human nutrition. <em>Nature, 510</em>, 139–142. https://doi.org/10.1038/nature13179</p>
+      </section>
+      <section><h3>Kevin: conflict and migration</h3>
+        <p>Hoffmann, R., Abel, G., Malpede, M., Muttarak, R., &amp; Percoco, M. (2024). Drought and aridity influence internal migration worldwide. <em>Nature Climate Change, 14</em>, 1245–1253. https://doi.org/10.1038/s41558-024-02165-1</p>
+        <p>Mach, K. J., Kraan, C. M., Adger, W. N., Buhaug, H., Burke, M., Fearon, J. D., Field, C. B., Hendrix, C. S., Maystadt, J.-F., O'Loughlin, J., Roessler, P., Scheffran, J., Schultz, K. A., &amp; von Uexkull, N. (2019). Climate as a risk factor for armed conflict. <em>Nature, 571</em>(7764), 193–197. https://doi.org/10.1038/s41586-019-1300-6</p>
+        <p>Watson, T., Lenton, T., &amp; Safra de Campos, R. (2023). The climate change, conflict and migration nexus: A holistic view. <em>Climate Resilience and Sustainability, 2</em>(2), e250. https://doi.org/10.1002/cli2.50</p>
+      </section>
+      <section><h3>Stella: government action</h3>
+        <p>Falkner, R. (2016). The Paris Agreement and the new logic of international climate politics. <em>International Affairs, 92</em>(5), 1107–1125. https://doi.org/10.1111/1468-2346.12708</p>
+        <p>Roelfsema, M., van Soest, H. L., Harmsen, M., van Vuuren, D. P., Bertram, C., den Elzen, M., … Vishwanathan, S. S. (2020). Taking stock of national climate policies to evaluate implementation of the Paris Agreement. <em>Nature Communications, 11</em>(1), 2096. https://doi.org/10.1038/s41467-020-15414-6</p>
+        <p>United Nations Environment Programme. (2023). <em>Emissions gap report 2023: Broken record – Temperatures hit new highs, yet world fails to cut emissions (again)</em>. https://www.unep.org/resources/emissions-gap-report-2023</p>
+      </section>
+      <section><h3>Kewe: economy and finance</h3>
+        <p>Battiston, S., Mandel, A., Monasterolo, I., Schütze, F., &amp; Visentin, G. (2017). A climate stress-test of the financial system. <em>Nature Climate Change, 7</em>, 283–288. https://doi.org/10.1038/nclimate3255</p>
+        <p>Bolton, P., Després, M., Pereira da Silva, L. A., Samama, F., &amp; Svartzman, R. (2020). <em>The green swan: Central banking and financial stability in the age of climate change</em>. Bank for International Settlements. https://www.bis.org/publ/othp31.pdf</p>
+        <p>Curcio, D., Gianfrancesco, I., &amp; Vioto, D. (2023). Climate change and financial systemic risk: Evidence from US banks and insurers. <em>Journal of Financial Stability, 66</em>, 101132. https://doi.org/10.1016/j.jfs.2023.101132</p>
+      </section>
+      <section><h3>Mark: Ireland</h3>
+        <p>de Bruin, K. C., Kyei, C. K., &amp; Henry, L. (2024). <em>Climate change impacts and associated economic costs in Ireland</em> (ESRI Working Paper). Economic and Social Research Institute.</p>
+        <p>Desmond, M., O'Brien, P., &amp; McGovern, F. (2017). <em>A summary of the state of knowledge on climate change impacts for Ireland</em> (EPA Research Report No. 223). Environmental Protection Agency.</p>
+        <p>Mozahid, M. N., &amp; Gardebroek, C. (2025). Weather impact on environmental efficiency of the Irish dairy sector: A panel stochastic frontier analysis. <em>European Review of Agricultural Economics, 52</em>(5), 1410–1441. https://doi.org/10.1093/erae/jbaf024</p>
+        <p>Sweeney, J., Albanito, F., Brereton, A., Caffarra, A., Charlton, R., Donnelly, A., Fealy, R., Fitzgerald, J., Holden, N., Jones, M., &amp; Murphy, C. (2008). <em>Climate change: Refining the impacts for Ireland</em> (STRIVE Report 2001-CD-C3-M1). Environmental Protection Agency.</p>
+      </section>
+      <section><h3>Figure</h3>
+        <p>Hawkins, E. (2018). <em>Warming stripes</em>. Climate Lab Book, University of Reading. Stripes on this slide are a stylised illustration, not plotted data.</p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.getElementById("planet");
+  const stage = document.getElementById("stage");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Planet geometry (stage coordinates)
+  const CX = 800, CY = 468, R = 210;
+  const INK = "#0B1D2E";
+
+  // Label anchors: where each connector meets its text
+  const rowsY = [272, 476, 680];
+  const anchors = [
+    [540, rowsY[0]], [540, rowsY[1]], [540, rowsY[2]],
+    [1060, rowsY[0]], [1060, rowsY[1]], [1060, rowsY[2]],
+  ];
+  document.querySelectorAll(".angle").forEach((el, i) => {
+    el.style.top = (anchors[i][1] - 95) + "px";
+  });
+
+  // Seeded randomness so the planet is identical every time
+  function rng(seed) {
+    return () => {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const rand = rng(20260929);
+  const el = (tag, attrs, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    (parent || svg).appendChild(e);
+    return e;
+  };
+
+  // ---- defs ----
+  const defs = el("defs", {});
+  const clip = el("clipPath", { id: "disc" }, defs);
+  el("circle", { cx: CX, cy: CY, r: R }, clip);
+  const glowF = el("filter", { id: "glow", x: "-50%", y: "-50%", width: "200%", height: "200%" }, defs);
+  el("feGaussianBlur", { stdDeviation: "3.2" }, glowF);
+  const halo = el("radialGradient", { id: "halo", cx: "50%", cy: "50%", r: "50%" }, defs);
+  el("stop", { offset: "70%", "stop-color": "#F7866A", "stop-opacity": "0" }, halo);
+  el("stop", { offset: "86%", "stop-color": "#F7866A", "stop-opacity": "0.10" }, halo);
+  el("stop", { offset: "100%", "stop-color": "#F7866A", "stop-opacity": "0" }, halo);
+
+  // Soft halo behind the planet
+
+  // ---- warming stripes ----
+  const pal = ["#08306B","#08519C","#2171B5","#4292C6","#6BAED6","#9ECAE1","#C6DBEF",
+               "#FEE0D2","#FCBBA1","#FC9272","#FB6A4A","#EF3B2C","#CB181D","#A50F15","#67000D"];
+  const n = 150, vals = [];
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1);
+    vals.push(-0.35 + 1.55 * Math.pow(t, 2.2) + (rand() + rand() + rand() - 1.5) * 0.17);
+  }
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  const stripesG = el("g", { "clip-path": "url(#disc)", id: "stripes" });
+  const sw = (2 * R) / n;
+  vals.forEach((v, i) => {
+    const k = Math.min(pal.length - 1, Math.floor((v - lo) / (hi - lo) * pal.length));
+    el("rect", { x: CX - R + i * sw, y: CY - R, width: sw + 0.6, height: 2 * R, fill: pal[k] }, stripesG);
+  });
+
+  // ---- cracks ----
+  function walk(x0, y0, ang, len, amp, steps, pin) {
+    const ux = Math.cos(ang), uy = Math.sin(ang), px = -uy, py = ux;
+    const pts = []; let off = 0;
+    for (let k = 0; k <= steps; k++) {
+      const t = k / steps;
+      if (k > 0 && k < steps) { off += (rand() * 2 - 1) * amp; off *= 0.8; }
+      const eff = pin ? off * (1 - t * t) : off;
+      pts.push([x0 + len * t * ux + eff * px, y0 + len * t * uy + eff * py]);
+    }
+    return pts;
+  }
+  function taper(pts, w0, w1) {
+    const L = [], Rr = [];
+    pts.forEach((p, k) => {
+      const a = pts[Math.max(0, k - 1)], b = pts[Math.min(pts.length - 1, k + 1)];
+      let dx = b[0] - a[0], dy = b[1] - a[1]; const m = Math.hypot(dx, dy) || 1;
+      const nx = -dy / m, ny = dx / m, w = (w0 + (w1 - w0) * k / (pts.length - 1)) / 2;
+      L.push([p[0] + nx * w, p[1] + ny * w]); Rr.push([p[0] - nx * w, p[1] - ny * w]);
+    });
+    return "M" + L.concat(Rr.reverse()).map(p => p.map(v => v.toFixed(1)).join(",")).join("L") + "Z";
+  }
+  const line = pts => "M" + pts.map(p => p.map(v => v.toFixed(1)).join(",")).join("L");
+
+  const cracksG = el("g", { "clip-path": "url(#disc)" });
+  const cracks = anchors.map(([ax, ay], i) => {
+    const ang = Math.atan2(ay - CY, ax - CX);
+    const mask = el("mask", { id: "m" + i, maskUnits: "userSpaceOnUse", x: 0, y: 0, width: 1600, height: 900 }, defs);
+    const grow = el("circle", { cx: CX, cy: CY, r: 0, fill: "#fff" }, mask);
+    const g = el("g", { mask: `url(#m${i})` }, cracksG);
+
+    const main = walk(CX, CY, ang, R + 2, 7, 26, true);
+    el("path", { d: taper(main, 9, 3.2), fill: INK }, g);
+    const glowPaths = [main];
+    for (let b = 0; b < 2; b++) {
+      const k = 7 + Math.floor(rand() * 12);
+      const ba = ang + (rand() < .5 ? -1 : 1) * (0.42 + rand() * 0.3);
+      const br = walk(main[k][0], main[k][1], ba, 38 + rand() * 46, 3, 8, false);
+      el("path", { d: taper(br, 4, 1), fill: INK }, g);
+      glowPaths.push(br);
+    }
+    const glow = el("g", { class: "glow", opacity: 0 }, g);
+    glowPaths.forEach((p, j) => {
+      el("path", { d: line(p), fill: "none", stroke: "#FDAE6B", "stroke-width": j ? 1.6 : 3, filter: "url(#glow)" }, glow);
+      el("path", { d: line(p), fill: "none", stroke: "#FFE3C4", "stroke-width": j ? 0.5 : 0.9, "stroke-linecap": "round" }, glow);
+    });
+
+    // Connector from the crack's exit point to the label
+    const ex = CX + R * Math.cos(ang), ey = CY + R * Math.sin(ang);
+    const len = Math.hypot(ax - ex, ay - ey);
+    const conn = el("path", {
+      d: `M${ex.toFixed(1)},${ey.toFixed(1)}L${ax},${ay}`, stroke: "#FDAE6B", "stroke-width": 1.4,
+      fill: "none", "stroke-dasharray": len, "stroke-dashoffset": len, opacity: 0.85
+    });
+    const dot = el("circle", { cx: ax, cy: ay, r: 3.5, fill: "#FDAE6B", opacity: 0 });
+    return { grow, glow, conn, dot, len };
+  });
+  el("circle", { cx: CX, cy: CY, r: 7, fill: INK, "clip-path": "url(#disc)" });
+
+  // ---- reveal choreography ----
+  const labels = [...document.querySelectorAll(".angle")];
+  const marks = [...document.querySelectorAll("#progress i")];
+  const markCol = ["#7FB8DD", "#9ECAE1", "#C6DBEF", "#FCBBA1", "#FB6A4A", "#EF3B2C"];
+  const answer = document.getElementById("answer");
+  let step = 0; // 0..7
+
+  function tween(ms, fn, done) {
+    if (reduce || ms === 0) { fn(1); done && done(); return; }
+    const t0 = performance.now();
+    const f = now => {
+      const t = Math.min(1, (now - t0) / ms);
+      fn(1 - Math.pow(1 - t, 3));
+      t < 1 ? requestAnimationFrame(f) : done && done();
+    };
+    requestAnimationFrame(f);
+  }
+
+  function setActive(i) {
+    cracks.forEach((c, j) => c.glow.setAttribute("opacity", j < step ? (j === i ? 1 : 0.45) : 0));
+  }
+
+  function reveal(i, fast) {
+    const c = cracks[i], d = fast ? 0 : 1;
+    marks[i].style.background = markCol[i];
+    c.glow.setAttribute("opacity", 1);
+    tween(900 * d, t => c.grow.setAttribute("r", t * (R + 10)), () => {
+      tween(500 * d, t => c.conn.setAttribute("stroke-dashoffset", c.len * (1 - t)), () => {
+        c.dot.setAttribute("opacity", 1);
+        labels[i].classList.add("on");
+      });
+    });
+  }
+  function hide(i) {
+    const c = cracks[i];
+    marks[i].style.background = "";
+    labels[i].classList.remove("on");
+    c.dot.setAttribute("opacity", 0);
+    c.conn.setAttribute("stroke-dashoffset", c.len);
+    c.grow.setAttribute("r", 0);
+    c.glow.setAttribute("opacity", 0);
+  }
+
+  function next() {
+    hint.classList.add("gone");
+    if (step < 6) { reveal(step, false); step++; setActive(step - 1); }
+    else if (step === 6) {
+      step = 7; answer.classList.add("on");
+      cracks.forEach(c => c.glow.setAttribute("opacity", 1));
+    }
+  }
+  function prev() {
+    if (step === 7) { step = 6; answer.classList.remove("on"); setActive(5); }
+    else if (step > 0) { step--; hide(step); setActive(step - 1); }
+  }
+  function all() {
+    hint.classList.add("gone");
+    for (let i = step; i < 6; i++) reveal(i, true);
+    step = 7; answer.classList.add("on");
+    cracks.forEach(c => c.glow.setAttribute("opacity", 1));
+  }
+  function reset() { answer.classList.remove("on"); for (let i = 5; i >= 0; i--) hide(i); step = 0; }
+
+  // ---- controls ----
+  const hint = document.getElementById("hint");
+  const refs = document.getElementById("refs");
+  const toggleRefs = open => refs.classList.toggle("open", open ?? !refs.classList.contains("open"));
+
+  document.addEventListener("keydown", e => {
+    if (refs.classList.contains("open")) {
+      if (e.key === "Escape" || e.key.toLowerCase() === "r") toggleRefs(false);
+      return;
+    }
+    const k = e.key;
+    if (k === " " || k === "ArrowRight" || k === "PageDown" || k === "Enter") { e.preventDefault(); next(); }
+    else if (k === "ArrowLeft" || k === "PageUp" || k === "Backspace") { e.preventDefault(); prev(); }
+    else if (k.toLowerCase() === "a") all();
+    else if (k === "0" || k === "Home") reset();
+    else if (k.toLowerCase() === "r") toggleRefs(true);
+    else if (k.toLowerCase() === "f") {
+      document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
+    }
+  });
+  stage.addEventListener("click", e => {
+    if (e.target.closest("#refs, #refsBtn")) return;
+    next();
+  });
+  document.getElementById("refsBtn").addEventListener("click", () => toggleRefs(true));
+  document.getElementById("refsClose").addEventListener("click", () => toggleRefs(false));
+
+  // ---- fit the 1600×900 stage to any screen ----
+  function fit() {
+    const s = Math.min(innerWidth / 1600, innerHeight / 900);
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  addEventListener("resize", fit); fit();
+  stage.focus();
+
+  // ?all in the URL shows the finished slide (for screenshots or printing)
+  if (/[?&]all\b/.test(location.search)) all();
+  addEventListener("beforeprint", all);
+})();
+</script>
+</body>
+</html>
